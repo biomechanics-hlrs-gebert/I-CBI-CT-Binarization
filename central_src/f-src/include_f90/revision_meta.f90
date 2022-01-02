@@ -1,3 +1,3 @@
-CHARACTER(LEN=scl), PARAMETER :: longname = 'Computed Tomography Image Filter'
-CHARACTER(LEN=scl), PARAMETER :: revision = 'V3.2.1'
-CHARACTER(LEN=scl), PARAMETER :: hash = '2dd7fa080e2c39e54a5ed0d719657ba782933a43'
+CHARACTER(LEN=scl), PARAMETER :: longname = 'CT-Binarization'
+CHARACTER(LEN=scl), PARAMETER :: revision = ''
+CHARACTER(LEN=scl), PARAMETER :: hash = 'ca55537960b7e9eaa5d47153ef12c03f09a1bdad'
