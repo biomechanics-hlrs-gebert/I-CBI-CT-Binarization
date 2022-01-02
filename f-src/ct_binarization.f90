@@ -105,7 +105,9 @@ USE user_interaction
 USE meta
 USE MPI
 USE raw_binary
+USE vtk_meta_data
 USE binarize
+
 
 IMPLICIT NONE
 
@@ -113,7 +115,7 @@ IMPLICIT NONE
 INTEGER(KIND=ik), PARAMETER :: debug = 2   ! Choose an even integer!!
 
 CHARACTER(LEN=mcl), DIMENSION(:), ALLOCATABLE :: m_rry
-CHARACTER(LEN=scl) :: type, binary, invert, restart, restart_cmd_arg
+CHARACTER(LEN=scl) :: type, binary, invert, restart, restart_cmd_arg, filename, dmn_no
 CHARACTER(LEN=  8) :: date
 CHARACTER(LEN= 10) :: time
 
@@ -121,12 +123,13 @@ INTEGER(KIND=INT16), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik2
 INTEGER(KIND=INT32), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik4
 INTEGER(KIND=ik), DIMENSION(3) :: dims, rry_dims, sections, rank_section
 INTEGER(KIND=ik), DIMENSION(3) :: remainder_per_dir, dims_reduced, subarray_origin
-INTEGER(KIND=ik), DIMENSION(2) :: array_lo_hi
-INTEGER(KIND=ik) :: in_lo, in_hi, img_max
+INTEGER(KIND=ik), DIMENSION(2) :: in_lo_hi, out_lo_hi
+INTEGER(KIND=ik) :: img_max, specific_dmn, fh_temp
 
 REAL(KIND=rk) :: start, end
+REAL(KIND=rk), DIMENSION(3) :: rgn_glbl_shft, spcng, origin
 
-LOGICAL :: stp
+LOGICAL :: stp, fex
 
 ! MPI variables
 INTEGER(KIND=mik) :: ierr, my_rank, size_mpi
@@ -184,28 +187,56 @@ IF (my_rank==0) THEN
 
     CALL meta_read(std_out, 'TYPE_RAW'  , m_rry, type)
     CALL meta_read(std_out, 'DIMENSIONS', m_rry, dims)
+    
+    CALL meta_read(std_out, 'ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft)
+    CALL meta_read(std_out, 'SPACING'   , m_rry, spcng)
+    CALL meta_read(std_out, 'EXPORT_DMN', m_rry, specific_dmn)
 
     CALL meta_read(std_out, 'BINARIZE_HI', m_rry, img_max)
     CALL meta_read(std_out, 'BIN_INVERT' , m_rry, invert)
-    CALL meta_read(std_out, 'HU_THRSH_HI', m_rry, in_hi)
-    CALL meta_read(std_out, 'HU_THRSH_LO', m_rry, in_lo)
+    CALL meta_read(std_out, 'HU_THRSH_RNG_LO', m_rry, in_lo_hi(1))
+    CALL meta_read(std_out, 'HU_THRSH_RNG_HI', m_rry, in_lo_hi(2))
 
     IF((type /= "ik2") .AND. (type /= "ik4")) THEN
         mssg = "Program only supports ik2 and ik4 for 'TYPE_RAW'"
         CALL print_err_stop(std_out, mssg, 1)
     END IF
-
 END IF ! my_rank==0
 
 !------------------------------------------------------------------------------
 ! Send required variables
 !------------------------------------------------------------------------------
-CALL MPI_BCAST(in%p_n_bsnm , INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(out%p_n_bsnm, INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(type  , INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(invert, INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(img_max, 1_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(dims   , 3_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(in%p_n_bsnm ,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(out%p_n_bsnm,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(type        ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(invert      ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(img_max     ,  1_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(specific_dmn,  1_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(in_lo_hi    ,  2_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(dims        ,  3_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(spcng       ,  3_mik, MPI_DOUBLE_PRECISION , 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(rgn_glbl_shft, 3_mik, MPI_DOUBLE_PRECISION , 0_mik, MPI_COMM_WORLD, ierr)
+
+!------------------------------------------------------------------------------
+! Write a specific domain by user request for development purposes as vtk file.
+! This procedure completely bypasses the meta file format(!)
+!
+! PART 1. Part 2 at the end of the parallel section of the program.
+!------------------------------------------------------------------------------
+IF(specific_dmn == my_rank+1) THEN
+    fh_temp = give_new_unit()
+    
+    WRITE(dmn_no, '(I0)') specific_dmn
+
+    filename = TRIM(out%p_n_bsnm)//"-Domain"//TRIM(ADJUSTL(dmn_no))//vtk_suf
+
+    INQUIRE(FILE=filename, EXIST=fex)
+
+    IF(fex) THEN
+        mssg = "The *.vtk of th specified domain already exists."
+        CALL print_err_stop(std_out, mssg, 1)
+    END IF
+END IF
 
 !------------------------------------------------------------------------------
 ! Get dimensions for each domain. Every processor reveives its own domain.
@@ -254,12 +285,12 @@ IF(my_rank == 0) THEN
         WRITE(std_out, FMT_MSG_A3I0) "subarray_origin: ", subarray_origin
         WRITE(std_out, FMT_MSG_SEP)
         WRITE(std_out, FMT_MSG)     "Binarization:"
-        WRITE(std_out, FMT_MSG_AI0) "Threshold lo: ", in_lo
-        WRITE(std_out, FMT_MSG_AI0) "Threshold hi: ", in_hi
-        WRITE(std_out, FMT_MSG_AI0) "Effective array low: ", array_lo_hi(1)
-        WRITE(std_out, FMT_MSG_AI0) "Effective array high: ", array_lo_hi(2)
+        WRITE(std_out, FMT_MSG_AI0) "Chosen threshold lo: ", in_lo_hi(1)
+        WRITE(std_out, FMT_MSG_AI0) "Chosen threshold hi: ", in_lo_hi(2)
+        WRITE(std_out, FMT_MSG)
+        WRITE(std_out, FMT_MSG)     "Export domain number:"
+        WRITE(std_out, FMT_MSG_AI0) "specific_dmn: ", specific_dmn
         WRITE(std_out, FMT_MSG_SEP)
-        
         FLUSH(std_out)
     END IF
 END IF
@@ -277,19 +308,45 @@ END SELECT
 !------------------------------------------------------------------------------
 ! Initialize array low/high and invert image if requested.
 !------------------------------------------------------------------------------
-array_lo_hi = [ 0_ik, img_max ]
-IF(invert == 'YES') array_lo_hi = [ img_max, 0_ik ]
+out_lo_hi = [ 0_ik, img_max ]
+IF(invert == 'YES') out_lo_hi = [ img_max, 0_ik ]
+
+IF((debug >= 0) .AND. (my_rank == 0)) THEN
+    WRITE(std_out, FMT_MSG_AI0) "Input binarize low: ", in_lo_hi(1)
+    WRITE(std_out, FMT_MSG_AI0) "Input binarize high: ", in_lo_hi(2)
+    WRITE(std_out, FMT_MSG_AI0) "Output array low: ", out_lo_hi(1)
+    WRITE(std_out, FMT_MSG_AI0) "Output array high: ", out_lo_hi(2)
+    WRITE(std_out, FMT_MSG_SEP)
+    FLUSH(std_out)
+END IF
 
 !------------------------------------------------------------------------------
 ! Compute binarization
 !------------------------------------------------------------------------------
 IF(my_rank==0) WRITE(std_out, FMT_TXT) 'Binarizing image.'
 
-
 SELECT CASE(type)
-    CASE('ik2'); CALL ct_binarize(rry_ik2, [ in_lo, in_hi ], array_lo_hi)
-    CASE('ik4'); CALL ct_binarize(rry_ik4, [ in_lo, in_hi ], array_lo_hi)
+    CASE('ik2'); CALL ct_binarize(rry_ik2, in_lo_hi, out_lo_hi)
+    CASE('ik4'); CALL ct_binarize(rry_ik4, in_lo_hi, out_lo_hi)
 END SELECT
+
+!------------------------------------------------------------------------------
+! Write a specific domain by user request for development purposes as vtk file.
+! PART 2. Part 1 after broadcasting general information.
+!------------------------------------------------------------------------------
+IF(specific_dmn == my_rank+1) THEN
+    origin = (rry_dims * (sections - 1_ik) * spcng) + rgn_glbl_shft
+
+    CALL write_vtk_struct_points_header(fh_temp, filename, TRIM(type), &
+        spcng, origin, rry_dims)
+
+    SELECT CASE(type)
+        CASE('ik2'); CALL ser_write_raw(fh_temp, filename, rry_ik2)
+        CASE('ik4'); CALL ser_write_raw(fh_temp, filename, rry_ik4)
+    END SELECT
+
+    CALL write_vtk_struct_points_footer(fh_temp, filename)
+END IF
 
 !------------------------------------------------------------------------------
 ! Write raw data
@@ -302,7 +359,6 @@ SELECT CASE(type)
     CASE('ik4') 
         CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik4)
 END SELECT
-
 
 !------------------------------------------------------------------------------
 ! Jump to end for a more gracefully ending of the program in specific cases :-)

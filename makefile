@@ -126,6 +126,7 @@ all: st $(main_bin)
 # --------------------------------------------------------------------------------------------------
 # Main object
 $(obj_dir)ct_binarization$(obj_ext):$(st_mod_dir)global_std$(mod_ext) $(st_mod_dir)raw_binary$(mod_ext)\
+						 $(st_mod_dir)vtk_meta_data$(mod_ext)\
 						 $(f-src_dir)ct_binarization$(f90_ext)
 	@echo "-- Compiles: " $(f-src_dir)ct_binarization$(f90_ext)" -----"
 	$(compiler) $(c_flags_f90) -c $(f-src_dir)ct_binarization$(f90_ext) -o $@
