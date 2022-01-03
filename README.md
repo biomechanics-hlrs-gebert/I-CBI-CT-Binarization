@@ -29,9 +29,10 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 ## Requirements
 * x86 64bit Hardware
-* Linux x86 64Bit Installation with a BASh
-* GNU Compiler Collection (GCC) including gcc/gfortran
-* An installation of Open MPI - run the script in the project's root directory.
+* Linux x86 64Bit Installation with a Bash
+* GNU Compiler Collection (GCC)
+* An installation of Open-MPI
+
 ### Message Passing Interface 
 Parallelization of the program is done with an API called MPI (Message Passing Interface).
 
