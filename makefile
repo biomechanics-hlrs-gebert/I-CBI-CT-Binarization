@@ -46,13 +46,13 @@ st_path= $(build_path)/central_src/
 #
 st_obj_dir = $(st_path)/obj/
 st_mod_dir = $(st_path)/mod/
-st_f-src_dir = $(st_path)/f-src/
+st_f_src_dir = $(st_path)/f-src/
 #
 mod_dir   = $(build_path)/mod/
 obj_dir   = $(build_path)/obj/
 lib_dir   = $(build_path)/lib/
 bin_dir   = $(build_path)/bin/
-f-src_dir = $(build_path)/f-src/
+f_src_dir = $(build_path)/f-src/
 ext_f-src = $(build_path)/f-src/ext-src_
 #
 # Directory for documentation
@@ -127,9 +127,9 @@ all: st $(main_bin)
 # Main object
 $(obj_dir)ct_binarization$(obj_ext):$(st_mod_dir)global_std$(mod_ext) $(st_mod_dir)raw_binary$(mod_ext)\
 						 $(st_mod_dir)vtk_meta_data$(mod_ext)\
-						 $(f-src_dir)ct_binarization$(f90_ext)
-	@echo "-- Compiles: " $(f-src_dir)ct_binarization$(f90_ext)" -----"
-	$(compiler) $(c_flags_f90) -c $(f-src_dir)ct_binarization$(f90_ext) -o $@
+						 $(f_src_dir)ct_binarization$(f90_ext)
+	@echo "-- Compiles: " $(f_src_dir)ct_binarization$(f90_ext)" -----"
+	$(compiler) $(c_flags_f90) -c $(f_src_dir)ct_binarization$(f90_ext) -o $@
 	@echo
 
 # --------------------------------------------------------------------------------------------------
@@ -137,9 +137,9 @@ $(obj_dir)ct_binarization$(obj_ext):$(st_mod_dir)global_std$(mod_ext) $(st_mod_d
 export_revision:
 	@echo "----------------------------------------------------------------------------------"
 	@echo '-- Write revision and git info'
-	@echo "CHARACTER(LEN=scl), PARAMETER :: longname = '$(long_name)'" > $(st_f-src_dir)include_f90/revision_meta$(f90_ext)
-	@echo "CHARACTER(LEN=scl), PARAMETER :: revision = '$(trgt_vrsn)'" >> $(st_f-src_dir)include_f90/revision_meta$(f90_ext)
-	@echo "CHARACTER(LEN=scl), PARAMETER :: hash = '$(rev)'" >> $(st_f-src_dir)include_f90/revision_meta$(f90_ext)
+	@echo "CHARACTER(LEN=scl), PARAMETER :: longname = '$(long_name)'" > $(st_f_src_dir)include_f90/revision_meta$(f90_ext)
+	@echo "CHARACTER(LEN=scl), PARAMETER :: revision = '$(trgt_vrsn)'" >> $(st_f_src_dir)include_f90/revision_meta$(f90_ext)
+	@echo "CHARACTER(LEN=scl), PARAMETER :: hash = '$(rev)'" >> $(st_f_src_dir)include_f90/revision_meta$(f90_ext)
 	@echo "----------------------------------------------------------------------------------"
 
 # -----------------------------------------------------------------------------
