@@ -121,7 +121,8 @@ CHARACTER(LEN= 10) :: time
 
 INTEGER(KIND=INT16), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik2
 INTEGER(KIND=INT32), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik4
-INTEGER(KIND=ik), DIMENSION(3) :: dims, rry_dims, sections, rank_section
+INTEGER(KIND=mik), DIMENSION(3) :: sections
+INTEGER(KIND=ik), DIMENSION(3) :: dims, rry_dims, sections_ik=0, rank_section
 INTEGER(KIND=ik), DIMENSION(3) :: remainder_per_dir, dims_reduced, subarray_origin
 INTEGER(KIND=ik), DIMENSION(2) :: in_lo_hi, out_lo_hi
 INTEGER(KIND=ik) :: img_max, specific_dmn, fh_temp
@@ -210,12 +211,12 @@ CALL MPI_BCAST(in%p_n_bsnm ,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM
 CALL MPI_BCAST(out%p_n_bsnm,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(type        ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(invert      ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(img_max     ,  1_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(specific_dmn,  1_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(in_lo_hi    ,  2_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(dims        ,  3_mik, MPI_INTEGER, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(spcng       ,  3_mik, MPI_DOUBLE_PRECISION , 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(rgn_glbl_shft, 3_mik, MPI_DOUBLE_PRECISION , 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(img_max     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(specific_dmn,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(in_lo_hi    ,  2_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(dims        ,  3_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(spcng       ,  3_mik, MPI_DOUBLE_PRECISION, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(rgn_glbl_shft, 3_mik, MPI_DOUBLE_PRECISION, 0_mik, MPI_COMM_WORLD, ierr)
 
 !------------------------------------------------------------------------------
 ! Write a specific domain by user request for development purposes as vtk file.
@@ -250,20 +251,22 @@ END IF
 !------------------------------------------------------------------------------
 sections=0
 CALL MPI_DIMS_CREATE (size_mpi, 3_mik, sections, ierr)
-CALL get_rank_section(my_rank, sections, rank_section)
+sections_ik = INT(sections, KIND=ik)
 
-remainder_per_dir = MODULO(dims, sections)
+CALL get_rank_section(INT(my_rank, KIND=ik), sections_ik, rank_section)
+
+remainder_per_dir = MODULO(dims, sections_ik)
 
 dims_reduced   = dims - remainder_per_dir
 
-rry_dims  = (dims_reduced / sections)
+rry_dims  = (dims_reduced / sections_ik)
 
 subarray_origin = (rank_section-1_ik) * (rry_dims)
 
 ! Add the remainder to the last domains of each dimension
-IF(rank_section(1) == sections(1)) rry_dims(1) = rry_dims(1) + remainder_per_dir(1)
-IF(rank_section(2) == sections(2)) rry_dims(2) = rry_dims(2) + remainder_per_dir(2)
-IF(rank_section(3) == sections(3)) rry_dims(3) = rry_dims(3) + remainder_per_dir(3)
+IF(rank_section(1) == sections_ik(1)) rry_dims(1) = rry_dims(1) + remainder_per_dir(1)
+IF(rank_section(2) == sections_ik(2)) rry_dims(2) = rry_dims(2) + remainder_per_dir(2)
+IF(rank_section(3) == sections_ik(3)) rry_dims(3) = rry_dims(3) + remainder_per_dir(3)
 
 IF(my_rank == 0) THEN
     WRITE(std_out, FMT_TXT) 'Reading binary information of *.raw file.'
@@ -279,7 +282,7 @@ IF(my_rank == 0) THEN
         WRITE(std_out, FMT_MSG_AI0) "Processors:", size_mpi  
         WRITE(std_out, FMT_MSG) "Calculation of domain sectioning:"
         WRITE(std_out, FMT_MSG)
-        WRITE(std_out, FMT_MSG_A3I0) "sections: ", sections
+        WRITE(std_out, FMT_MSG_A3I0) "sections: ", sections_ik
         WRITE(std_out, FMT_MSG_A3I0) "dims: ", dims
         WRITE(std_out, FMT_MSG_A3I0) "dims_reduced: ", dims_reduced
         WRITE(std_out, FMT_MSG_A3I0) "subarray_origin: ", subarray_origin
