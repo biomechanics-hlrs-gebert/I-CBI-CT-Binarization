@@ -91,8 +91,12 @@ compile_MODE = dev
 # http://www.hpc.icc.ru/documentation/intel/f_ug1/fced_mod.htm
 ifeq ($(PE),gnu)
 	f90_std_IJ     = -J$(mod_dir) -I$(st_mod_dir)
-	f90_dev_flags  = -ggdb -o -O3 -fbacktrace -fbounds-check -fbackslash -Wno-conversion -Wall
-	f90_prod_flags = -O3 -fbounds-check
+	f90_dev_flags  = 	-fdefault-integer-8 -fdefault-real-8 \
+						-finstrument-functions -ggdb -o -O3 \
+						-fbacktrace -fbounds-check -fbackslash \
+						-Wno-conversion -Wall
+	f90_prod_flags = 	-fdefault-integer-8 -fdefault-real-8 \
+						-finstrument-functions -O3 -fbounds-check
 
 	ifeq ($(compile_MODE),prod)
 		c_flags_f90 = $(f90_std_IJ) $(f90_prod_flags)
