@@ -234,7 +234,7 @@ IF(specific_dmn == my_rank+1) THEN
     INQUIRE(FILE=filename, EXIST=fex)
 
     IF(fex) THEN
-        mssg = "The *.vtk of th specified domain already exists."
+        mssg = "The *.vtk of the specified domain already exists."
         CALL print_err_stop(std_out, mssg, 1)
     END IF
 END IF
