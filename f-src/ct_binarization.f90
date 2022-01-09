@@ -285,7 +285,7 @@ IF(my_rank == 0) THEN
         WRITE(std_out, FMT_MSG_AxI0) "sections: ", sections_ik
         WRITE(std_out, FMT_MSG_AxI0) "dims: ", dims
         WRITE(std_out, FMT_MSG_AxI0) "dims_reduced: ", dims_reduced
-        WRITE(std_out, FMT_MSG_AxF0) "subarray_origin: ", subarray_origin
+        WRITE(std_out, FMT_MSG_AxI0) "subarray_origin: ", subarray_origin
         WRITE(std_out, FMT_MSG_SEP)
         WRITE(std_out, FMT_MSG)     "Binarization:"
         WRITE(std_out, FMT_MSG_xAI0) "Chosen threshold lo: ", in_lo_hi(1)
