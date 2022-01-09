@@ -278,21 +278,21 @@ IF(my_rank == 0) THEN
         WRITE(std_out, FMT_TXT) "Date: "//date//" [ccyymmdd]"
         WRITE(std_out, FMT_TXT) "Time: "//time//" [hhmmss.sss]"  
         WRITE(std_out, FMT_TXT_SEP)
-        WRITE(std_out, FMT_MSG_AI0) "Debug Level:", debug
-        WRITE(std_out, FMT_MSG_AI0) "Processors:", size_mpi  
+        WRITE(std_out, FMT_MSG_AxI0) "Debug Level:", debug
+        WRITE(std_out, FMT_MSG_AxI0) "Processors:", size_mpi  
         WRITE(std_out, FMT_MSG) "Calculation of domain sectioning:"
         WRITE(std_out, FMT_MSG)
-        WRITE(std_out, FMT_MSG_A3I0) "sections: ", sections_ik
-        WRITE(std_out, FMT_MSG_A3I0) "dims: ", dims
-        WRITE(std_out, FMT_MSG_A3I0) "dims_reduced: ", dims_reduced
-        WRITE(std_out, FMT_MSG_A3I0) "subarray_origin: ", subarray_origin
+        WRITE(std_out, FMT_MSG_AxI0) "sections: ", sections_ik
+        WRITE(std_out, FMT_MSG_AxI0) "dims: ", dims
+        WRITE(std_out, FMT_MSG_AxI0) "dims_reduced: ", dims_reduced
+        WRITE(std_out, FMT_MSG_AxF0) "subarray_origin: ", subarray_origin
         WRITE(std_out, FMT_MSG_SEP)
         WRITE(std_out, FMT_MSG)     "Binarization:"
-        WRITE(std_out, FMT_MSG_AI0) "Chosen threshold lo: ", in_lo_hi(1)
-        WRITE(std_out, FMT_MSG_AI0) "Chosen threshold hi: ", in_lo_hi(2)
+        WRITE(std_out, FMT_MSG_xAI0) "Chosen threshold lo: ", in_lo_hi(1)
+        WRITE(std_out, FMT_MSG_xAI0) "Chosen threshold hi: ", in_lo_hi(2)
         WRITE(std_out, FMT_MSG)
         WRITE(std_out, FMT_MSG)     "Export domain number:"
-        WRITE(std_out, FMT_MSG_AI0) "specific_dmn: ", specific_dmn
+        WRITE(std_out, FMT_MSG_xAI0) "specific_dmn: ", specific_dmn
         WRITE(std_out, FMT_MSG_SEP)
         FLUSH(std_out)
     END IF
@@ -315,10 +315,10 @@ out_lo_hi = [ 0_ik, img_max ]
 IF(invert == 'YES') out_lo_hi = [ img_max, 0_ik ]
 
 IF((debug >= 0) .AND. (my_rank == 0)) THEN
-    WRITE(std_out, FMT_MSG_AI0) "Input binarize low: ", in_lo_hi(1)
-    WRITE(std_out, FMT_MSG_AI0) "Input binarize high: ", in_lo_hi(2)
-    WRITE(std_out, FMT_MSG_AI0) "Output array low: ", out_lo_hi(1)
-    WRITE(std_out, FMT_MSG_AI0) "Output array high: ", out_lo_hi(2)
+    WRITE(std_out, FMT_MSG_xAI0) "Input binarize low: ", in_lo_hi(1)
+    WRITE(std_out, FMT_MSG_xAI0) "Input binarize high: ", in_lo_hi(2)
+    WRITE(std_out, FMT_MSG_xAI0) "Output array low: ", out_lo_hi(1)
+    WRITE(std_out, FMT_MSG_xAI0) "Output array high: ", out_lo_hi(2)
     WRITE(std_out, FMT_MSG_SEP)
     FLUSH(std_out)
 END IF
@@ -374,7 +374,7 @@ END SELECT
 IF(my_rank == 0) THEN
     CALL CPU_TIME(end)
 
-    WRITE(std_out, FMT_TXT_AF0A) 'Finishing the program took', end-start,'seconds.'
+    WRITE(std_out, FMT_TXT_xAF0) 'Finishing the program took', end-start,'seconds.'
     WRITE(std_out, FMT_TXT_SEP)
 
     CALL meta_signing(binary)
