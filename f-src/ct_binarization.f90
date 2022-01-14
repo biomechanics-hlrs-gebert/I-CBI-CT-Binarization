@@ -185,7 +185,8 @@ IF (my_rank==0) THEN
     ! Parse input
     !------------------------------------------------------------------------------
     WRITE(std_out, FMT_TXT) 'Reading data from *.meta file.'
-
+    
+    CALL meta_read(std_out, 'RESTART'   , m_rry, restart)
     CALL meta_read(std_out, 'TYPE_RAW'  , m_rry, type)
     CALL meta_read(std_out, 'DIMENSIONS', m_rry, dims)
     

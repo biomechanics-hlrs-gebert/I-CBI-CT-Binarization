@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
-abstract: Direct discretization leads to an exact representation of structural objects like human bone in silico. To distinguish between bone and bone marrow, the images must be separated into two phases. This tool reads a filtered scalar field (i.e., CT-image) and binarizes it with a threshold, given by the user.
+abstract: "Direct discretization leads to an exact representation of structural objects like human bone in silico. To distinguish between bone and bone marrow, the images must be separated into two phases. This tool reads a filtered scalar field (i.e., CT-image) and binarizes it with a threshold, given by the user."
 authors:
   - family-names: "Gebert"
     given-names: "Johannes"
-    orcid: https://orcid.org/0000-0002-5245-2418
+    orcid: "https://orcid.org/0000-0002-5245-2418"
 title: "Computed Tomography Binarization (CTBI)"
 version: 5.0.0
 date-released: 2022-01-02
@@ -24,7 +24,7 @@ preferred-citation:
   authors:
   - family-names: "Gebert"
     given-names: "Johannes"
-    orcid: https://orcid.org/0000-0002-5245-2418
+    orcid: "https://orcid.org/0000-0002-5245-2418"
   title: "Computed Tomography Binarization (CTBI)"
   version: 1.0.0
   date-released: 2022-01-02
