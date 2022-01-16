@@ -379,7 +379,7 @@ IF(my_rank == 0) THEN
     WRITE(std_out, FMT_TXT_SEP)
 
     CALL meta_signing(binary)
-    CALL meta_close()
+    CALL meta_close(size_mpi)
 
     IF (std_out/=6) CALL meta_stop_ascii(fh=std_out, suf='.std_out')
 
