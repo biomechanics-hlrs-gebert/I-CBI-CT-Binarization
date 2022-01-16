@@ -159,10 +159,10 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     ! Parse the command arguments
     !------------------------------------------------------------------------------
-    CALL get_cmd_args(binary, filename, stp, restart, restart_cmd_arg)
+    CALL get_cmd_args(binary, in%full, stp, restart, restart_cmd_arg)
     IF(stp) GOTO 1001
     
-    IF (filename=='') THEN
+    IF (in%full=='') THEN
         CALL usage(binary)    
 
         !------------------------------------------------------------------------------
