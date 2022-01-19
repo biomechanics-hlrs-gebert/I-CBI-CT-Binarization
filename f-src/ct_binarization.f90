@@ -115,7 +115,7 @@ IMPLICIT NONE
 INTEGER(KIND=ik), PARAMETER :: debug = 2   ! Choose an even integer!!
 
 CHARACTER(LEN=mcl), DIMENSION(:), ALLOCATABLE :: m_rry
-CHARACTER(LEN=scl) :: type, binary, invert, restart, restart_cmd_arg, filename, dmn_no
+CHARACTER(LEN=scl) :: type_in, binary, invert, restart, restart_cmd_arg, filename, dmn_no
 CHARACTER(LEN=  8) :: date
 CHARACTER(LEN= 10) :: time
 
@@ -200,7 +200,7 @@ IF (my_rank==0) THEN
     WRITE(std_out, FMT_TXT) 'Reading data from *.meta file.'
     
     CALL meta_read(std_out, 'RESTART'   , m_rry, restart)
-    CALL meta_read(std_out, 'TYPE_RAW'  , m_rry, type)
+    CALL meta_read(std_out, 'TYPE_RAW'  , m_rry, type_in)
     CALL meta_read(std_out, 'DIMENSIONS', m_rry, dims)
     
     CALL meta_read(std_out, 'ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft)
@@ -212,7 +212,7 @@ IF (my_rank==0) THEN
     CALL meta_read(std_out, 'HU_THRSH_RNG_LO', m_rry, in_lo_hi(1))
     CALL meta_read(std_out, 'HU_THRSH_RNG_HI', m_rry, in_lo_hi(2))
 
-    IF((type /= "ik2") .AND. (type /= "ik4")) THEN
+    IF((type_in /= "ik2") .AND. (type_in /= "ik4")) THEN
         mssg = "Program only supports ik2 and ik4 for 'TYPE_RAW'"
         CALL print_err_stop(std_out, mssg, 1)
     END IF
@@ -223,7 +223,7 @@ END IF ! my_rank==0
 !------------------------------------------------------------------------------
 CALL MPI_BCAST(in%p_n_bsnm ,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(out%p_n_bsnm,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(type        ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(type_in        ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(invert      ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(img_max     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(specific_dmn,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
@@ -315,7 +315,7 @@ END IF
 !------------------------------------------------------------------------------
 ! Read binary part of the vtk file - basically a *.raw file
 !------------------------------------------------------------------------------
-SELECT CASE(type)
+SELECT CASE(type_in)
     CASE('ik2') 
         CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik2)
     CASE('ik4') 
@@ -342,7 +342,7 @@ END IF
 !------------------------------------------------------------------------------
 IF(my_rank==0) WRITE(std_out, FMT_TXT) 'Binarizing image.'
 
-SELECT CASE(type)
+SELECT CASE(type_in)
     CASE('ik2'); CALL ct_binarize(rry_ik2, in_lo_hi, out_lo_hi)
     CASE('ik4'); CALL ct_binarize(rry_ik4, in_lo_hi, out_lo_hi)
 END SELECT
@@ -354,10 +354,10 @@ END SELECT
 IF(specific_dmn == my_rank+1) THEN
     origin = (rry_dims * (sections - 1_ik) * spcng) + rgn_glbl_shft
 
-    CALL write_vtk_struct_points_header(fh_temp, filename, TRIM(type), &
+    CALL write_vtk_struct_points_header(fh_temp, filename, TRIM(type_in), &
         spcng, origin, rry_dims)
 
-    SELECT CASE(type)
+    SELECT CASE(type_in)
         CASE('ik2'); CALL ser_write_raw(fh_temp, filename, rry_ik2)
         CASE('ik4'); CALL ser_write_raw(fh_temp, filename, rry_ik4)
     END SELECT
@@ -367,15 +367,23 @@ END IF
 
 !------------------------------------------------------------------------------
 ! Write raw data
+! Only signed integer kind=2 supported! Everything else is nonsense or a 
+! compatibility mess.
 !------------------------------------------------------------------------------
-IF(my_rank==0) WRITE(std_out, FMT_TXT) 'Writing binary information to *.raw file.'
+IF(my_rank==0) THEN
+    WRITE(std_out, FMT_TXT) 'Writing binary information to *.raw file.'
+    CALL meta_write(fhmeo, 'TYPE_RAW', 'ik2')
+END IF
 
-SELECT CASE(type)
-    CASE('ik2') 
-        CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik2)
-    CASE('ik4') 
-        CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik4)
+SELECT CASE(type_in)
+    CASE('ik4')
+        ALLOCATE(rry_ik2(rry_dims(1), rry_dims(2), rry_dims(3)))
+        rry_ik2 = INT(rry_ik4, KIND=INT16)
+
+        DEALLOCATE(rry_ik4)
 END SELECT
+
+CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik2)
 
 !------------------------------------------------------------------------------
 ! Jump to end for a more gracefully ending of the program in specific cases :-)
