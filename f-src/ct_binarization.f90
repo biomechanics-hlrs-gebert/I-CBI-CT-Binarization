@@ -115,7 +115,7 @@ IMPLICIT NONE
 INTEGER(KIND=ik), PARAMETER :: debug = 2   ! Choose an even integer!!
 
 CHARACTER(LEN=mcl), DIMENSION(:), ALLOCATABLE :: m_rry
-CHARACTER(LEN=mcl) :: cmd_arg_history
+CHARACTER(LEN=mcl) :: cmd_arg_history=''
 CHARACTER(LEN=scl) :: type_in, binary, invert, restart, restart_cmd_arg, filename, dmn_no
 CHARACTER(LEN=  8) :: date
 CHARACTER(LEN= 10) :: time
@@ -194,7 +194,7 @@ IF (my_rank==0) THEN
 
     CALL show_title()
  
-    IF(debug >=0) WRITE(std_out, FMT_MSG) "Post mortem info probably in ./datasets/.temporary.std_out"
+    IF(debug >=0) WRITE(std_out, FMT_MSG) "Post mortem info probably in ./datasets/temporary.std_out"
 
     !------------------------------------------------------------------------------
     ! Parse input
