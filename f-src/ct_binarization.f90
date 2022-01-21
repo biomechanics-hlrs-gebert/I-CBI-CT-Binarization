@@ -195,6 +195,7 @@ IF (my_rank==0) THEN
     CALL show_title()
  
     IF(debug >=0) WRITE(std_out, FMT_MSG) "Post mortem info probably in ./datasets/temporary.std_out"
+    WRITE(std_out, FMT_TXT) "Program invocation:"//TRIM(cmd_arg_history)          
 
     !------------------------------------------------------------------------------
     ! Parse input
@@ -211,8 +212,8 @@ IF (my_rank==0) THEN
 
     CALL meta_read(std_out, 'BINARIZE_HI', m_rry, img_max)
     CALL meta_read(std_out, 'BIN_INVERT' , m_rry, invert)
-    CALL meta_read(std_out, 'HU_THRSH_RNG_LO', m_rry, in_lo_hi(1))
-    CALL meta_read(std_out, 'HU_THRSH_RNG_HI', m_rry, in_lo_hi(2))
+    CALL meta_read(std_out, 'HU_THRSH_LO', m_rry, in_lo_hi(1))
+    CALL meta_read(std_out, 'HU_THRSH_HI', m_rry, in_lo_hi(2))
 
     IF((type_in /= "ik2") .AND. (type_in /= "ik4")) THEN
         mssg = "Program only supports ik2 and ik4 for 'TYPE_RAW'"
