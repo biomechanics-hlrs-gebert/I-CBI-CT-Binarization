@@ -29,20 +29,20 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 
 ## Requirements
 * x86 64bit Hardware
-* Linux x86 64Bit Installation with a Bash
-* GNU Compiler Collection (GCC)
+* Linux x86 64Bit Installation with Bash or Zsh
+* GNU Compiler Collection (GCC), especially with gfortran
 * An installation of Open-MPI
 
-### Message Passing Interface 
-Parallelization of the program is done with an API called MPI (Message Passing Interface).
+The program must be compiled with:
+* Global integer kind=64Bit, signed
+* Meta-format integer kind=64Bit, signed
+* MPI integer kind=32Bit
 
-Required: MPI - compiled with integer 4 and mpi_f08.
-
-  1. [Open-mpi 4.1.0](https://www.open-mpi.org/software/ompi/v4.1/) on local systems. Other versions are not tested.
-  2. [HPE-MPT on HLRS Hawk](https://kb.hlrs.de/platforms/index.php/MPI(Hawk))
-
-The program may be ported to other architectures. Maybe not :-)
-
+The installation of Open MPI is simplified with the install script of the repository "Overview" of the biomechanics-hlrs-gebert organization @GitHub.
+### Optional: Gnu debugging
+* [gdb](https://www.gnu.org/software/gdb/)
+* [tmpi](https://github.com/Azrael3000/tmpi)
+* [tmux](https://github.com/tmux/tmux/wiki)
 ## Build
 It's tested and therefore recommended to build and run the program as follows.
 ### Set up the Environment
@@ -59,3 +59,8 @@ Create documentation: ```make docs```
 
 ### Uninstall:
 ```make clean && rm -r <your program directory>```
+## External Sources
+Plain text headers are parsed via a [strings module](https://gbenthien.net/strings/index.html) by George Benthien from San Diego.
+## Arbitrary
+Use this program at your own risk.
+
