@@ -9,5 +9,3 @@ r RESTART               Y                                              ! Restart
 
 r NEW_BSNM_FEATURE      32767-65000                                    ! Last segment of basename
 r NEW_BSNM_PURPOSE      Dev                                            ! 3rd segment of basename
-
-----------------------------------------------------------------------------------------------------

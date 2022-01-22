@@ -195,7 +195,6 @@ IF (my_rank==0) THEN
     CALL show_title()
  
     IF(debug >=0) WRITE(std_out, FMT_MSG) "Post mortem info probably in ./datasets/temporary.std_out"
-    WRITE(std_out, FMT_TXT) "Program invocation:"//TRIM(cmd_arg_history)          
 
     !------------------------------------------------------------------------------
     ! Parse input
@@ -294,6 +293,7 @@ IF(my_rank == 0) THEN
         
         WRITE(std_out, FMT_TXT) "Date: "//date//" [ccyymmdd]"
         WRITE(std_out, FMT_TXT) "Time: "//time//" [hhmmss.sss]"  
+        WRITE(std_out, FMT_TXT) "Program invocation:"//TRIM(cmd_arg_history)          
         WRITE(std_out, FMT_TXT_SEP)
         WRITE(std_out, FMT_MSG_AxI0) "Debug Level:", debug
         WRITE(std_out, FMT_MSG_AxI0) "Processors:", size_mpi  
@@ -357,12 +357,14 @@ END SELECT
 IF(specific_dmn == my_rank+1) THEN
     origin = (rry_dims * (sections - 1_ik) * spcng) + rgn_glbl_shft
 
-    CALL write_vtk_struct_points_header(fh_temp, filename, TRIM(type_in), &
+    CALL write_vtk_struct_points_header(fh_temp, filename, 'ik2', &
         spcng, origin, rry_dims)
 
     SELECT CASE(type_in)
-        CASE('ik2'); CALL ser_write_raw(fh_temp, filename, rry_ik2)
-        CASE('ik4'); CALL ser_write_raw(fh_temp, filename, rry_ik4)
+        CASE('ik2')
+            CALL ser_write_raw(fh_temp, filename, rry_ik2, 'BIG_ENDIAN')
+        CASE('ik4')
+            CALL ser_write_raw(fh_temp, filename, INT(rry_ik4, KIND=INT16), 'BIG_ENDIAN')
     END SELECT
 
     CALL write_vtk_struct_points_footer(fh_temp, filename)
