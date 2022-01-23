@@ -126,7 +126,7 @@ INTEGER(KIND=mik), DIMENSION(3) :: sections
 INTEGER(KIND=ik), DIMENSION(3) :: dims, rry_dims, sections_ik=0, rank_section
 INTEGER(KIND=ik), DIMENSION(3) :: remainder_per_dir, dims_reduced, subarray_origin
 INTEGER(KIND=ik), DIMENSION(2) :: in_lo_hi, out_lo_hi
-INTEGER(KIND=ik) :: img_max, specific_dmn, fh_temp
+INTEGER(KIND=ik) :: img_max, img_min, specific_dmn, fh_temp
 
 REAL(KIND=rk) :: start, end
 REAL(KIND=rk), DIMENSION(3) :: rgn_glbl_shft, spcng, origin
@@ -209,6 +209,7 @@ IF (my_rank==0) THEN
     CALL meta_read(std_out, 'SPACING'   , m_rry, spcng)
     CALL meta_read(std_out, 'EXPORT_DMN', m_rry, specific_dmn)
 
+    CALL meta_read(std_out, 'BINARIZE_LO', m_rry, img_min)
     CALL meta_read(std_out, 'BINARIZE_HI', m_rry, img_max)
     CALL meta_read(std_out, 'BIN_INVERT' , m_rry, invert)
     CALL meta_read(std_out, 'HU_THRSH_LO', m_rry, in_lo_hi(1))
@@ -227,6 +228,7 @@ CALL MPI_BCAST(in%p_n_bsnm ,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM
 CALL MPI_BCAST(out%p_n_bsnm,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(type_in        ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(invert      ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(img_min     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(img_max     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(specific_dmn,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(in_lo_hi    ,  2_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
@@ -307,6 +309,8 @@ IF(my_rank == 0) THEN
         WRITE(std_out, FMT_MSG)     "Binarization:"
         WRITE(std_out, FMT_MSG_xAI0) "Chosen threshold lo: ", in_lo_hi(1)
         WRITE(std_out, FMT_MSG_xAI0) "Chosen threshold hi: ", in_lo_hi(2)
+        WRITE(std_out, FMT_MSG_xAI0) "Binarized image min: ", img_min
+        WRITE(std_out, FMT_MSG_xAI0) "Binarized image max: ", img_max
         WRITE(std_out, FMT_MSG)
         WRITE(std_out, FMT_MSG)     "Export domain number:"
         WRITE(std_out, FMT_MSG_xAI0) "specific_dmn: ", specific_dmn
@@ -328,8 +332,8 @@ END SELECT
 !------------------------------------------------------------------------------
 ! Initialize array low/high and invert image if requested.
 !------------------------------------------------------------------------------
-out_lo_hi = [ 0_ik, img_max ]
-IF(invert == 'YES') out_lo_hi = [ img_max, 0_ik ]
+out_lo_hi = [ img_min, img_max ]
+IF(invert == 'YES') out_lo_hi = [ img_max, img_min ]
 
 IF((debug >= 0) .AND. (my_rank == 0)) THEN
     WRITE(std_out, FMT_MSG_xAI0) "Input binarize low: ", in_lo_hi(1)
