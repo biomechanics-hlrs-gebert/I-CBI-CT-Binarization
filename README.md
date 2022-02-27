@@ -1,7 +1,9 @@
 # I-CTBI-CT_Binarization
-![Architecture](https://img.shields.io/badge/Architecture-x86-green)
-![OS](https://img.shields.io/badge/Linux-64Bit-green)
-![version](https://img.shields.io/badge/version-1.0.0-green)
+[![DOI](https://zenodo.org/badge/443731171.svg)](https://zenodo.org/badge/latestdoi/443731171)
+[![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
+![Architecture](https://img.shields.io/badge/Architecture-x86_64-blue)
+![OS](https://img.shields.io/badge/OS-Linux-blue)
+![version](https://img.shields.io/badge/version-1.0.0-blue)
 
 This program reads 3-Dimensional scalar fields to binarize and eventually invert them.
 
