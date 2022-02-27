@@ -201,19 +201,19 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     WRITE(std_out, FMT_TXT) 'Reading data from *.meta file.'
     
-    CALL meta_read(std_out, 'RESTART'   , m_rry, restart)
-    CALL meta_read(std_out, 'TYPE_RAW'  , m_rry, type_in)
-    CALL meta_read(std_out, 'DIMENSIONS', m_rry, dims)
+    CALL meta_read('RESTART'   , m_rry, restart)
+    CALL meta_read('TYPE_RAW'  , m_rry, type_in)
+    CALL meta_read('DIMENSIONS', m_rry, dims)
     
-    CALL meta_read(std_out, 'ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft)
-    CALL meta_read(std_out, 'SPACING'   , m_rry, spcng)
-    CALL meta_read(std_out, 'EXPORT_DMN', m_rry, specific_dmn)
+    CALL meta_read('ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft)
+    CALL meta_read('SPACING'   , m_rry, spcng)
+    CALL meta_read('EXPORT_DMN', m_rry, specific_dmn)
 
-    CALL meta_read(std_out, 'BINARIZE_LO', m_rry, img_min)
-    CALL meta_read(std_out, 'BINARIZE_HI', m_rry, img_max)
-    CALL meta_read(std_out, 'BIN_INVERT' , m_rry, invert)
-    CALL meta_read(std_out, 'HU_THRSH_LO', m_rry, in_lo_hi(1))
-    CALL meta_read(std_out, 'HU_THRSH_HI', m_rry, in_lo_hi(2))
+    CALL meta_read('BINARIZE_LO', m_rry, img_min)
+    CALL meta_read('BINARIZE_HI', m_rry, img_max)
+    CALL meta_read('BIN_INVERT' , m_rry, invert)
+    CALL meta_read('HU_THRSH_LO', m_rry, in_lo_hi(1))
+    CALL meta_read('HU_THRSH_HI', m_rry, in_lo_hi(2))
 
     IF((type_in /= "ik2") .AND. (type_in /= "ik4")) THEN
         mssg = "Program only supports ik2 and ik4 for 'TYPE_RAW'"
@@ -381,7 +381,7 @@ END IF
 !------------------------------------------------------------------------------
 IF(my_rank==0) THEN
     WRITE(std_out, FMT_TXT) 'Writing binary information to *.raw file.'
-    CALL meta_write(fhmeo, 'TYPE_RAW', 'ik4')
+    CALL meta_write('TYPE_RAW', 'ik4')
 END IF
 
 SELECT CASE(type_in)

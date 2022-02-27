@@ -1,0 +1,23 @@
+#!/bin/bash
+# ------------------------------------------------------------------------------
+# Batch scipt for HLRS Vulcan
+#
+# Author:    Johannes Gebert - HLRS - NUM - gebert@hlrs.de
+# Date:      21.01.2022
+# Last edit: 27.02.2022
+#
+# For use of PBSPro visit:
+# https://kb.hlrs.de/platforms/index.php/Batch_System_PBSPro_(vulcan)
+# ------------------------------------------------------------------------------
+#PBS -N cbi
+#PBS -l select=1:node_type=clx384gb40c:mpiprocs=40
+#PBS -l walltime=10:00:00
+#
+# Change to the direcotry that the job was submitted from
+cd "$PBS_O_WORKDIR" || exit
+#
+# Load module
+module load mpi/openmpi/4.1.0-gnu-10.3.0
+#
+# Launch the parallel mpi application
+mpirun -np 40 ./bin/ctbi_V1.0.0_x86_64 "$PBS_O_WORKDIR" ./datasets/FH01-2_mu_Dev_CTIF_G31Sig10.meta

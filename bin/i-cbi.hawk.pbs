@@ -1,0 +1,20 @@
+#!/bin/bash
+# ------------------------------------------------------------------------------
+# Batch scipt for HLRS Hawk
+#
+# Author:    Johannes Gebert - HLRS - NUM - gebert@hlrs.de
+# Date:      21.01.2022
+# Last edit: 27.02.2022
+#
+# For use of PBSPro visit:
+# https://kb.hlrs.de/platforms/index.php/Batch_System_PBSPro_(Hawk)
+# ------------------------------------------------------------------------------
+#PBS -N cbi
+#PBS -l select=1:node_type=rome:mpiprocs=128:node_type_mem=256gb
+#PBS -l walltime=10:00:00
+#
+# Change to the direcotry that the job was submitted from
+cd "$PBS_O_WORKDIR" || exit
+#
+# Launch the parallel mpi application
+mpirun -np 128 ./bin/ctbi_V1.0.0_x86_64 "$PBS_O_WORKDIR" ./datasets/FH01-2_mu_Dev_CTIF_G31Sig10.meta
