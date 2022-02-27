@@ -1,4 +1,4 @@
-# I-CTBI-CT_Binarization
+# I-CBI-CT-Binarization
 [![DOI](https://zenodo.org/badge/443731171.svg)](https://zenodo.org/badge/latestdoi/443731171)
 [![License: MIT](https://img.shields.io/badge/License-MIT-success.svg)](https://opensource.org/licenses/MIT)
 ![Architecture](https://img.shields.io/badge/Architecture-x86_64-blue)
