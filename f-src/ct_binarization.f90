@@ -176,8 +176,8 @@ IF (my_rank==0) THEN
     ! Check and open the input file; Modify the Meta-Filename / Basename
     ! Define the new application name first
     !------------------------------------------------------------------------------
-    global_meta_prgrm_mstr_app = 'CTBI' 
-    global_meta_program_keyword = 'CT_BINARIZATION'
+    global_meta_prgrm_mstr_app = 'cbi' 
+    global_meta_program_keyword = 'CT-BINARIZATION'
     CALL meta_append(m_rry)
 
     !------------------------------------------------------------------------------
@@ -376,23 +376,23 @@ END IF
 
 !------------------------------------------------------------------------------
 ! Write raw data
-! Only signed integer kind=2 supported! Everything else is nonsense or a 
+! Only signed integer kind=4 supported! Everything else is a ! nonsense or 
 ! compatibility mess.
 !------------------------------------------------------------------------------
 IF(my_rank==0) THEN
     WRITE(std_out, FMT_TXT) 'Writing binary information to *.raw file.'
-    CALL meta_write(fhmeo, 'TYPE_RAW', 'ik2')
+    CALL meta_write(fhmeo, 'TYPE_RAW', 'ik4')
 END IF
 
 SELECT CASE(type_in)
-    CASE('ik4')
-        ALLOCATE(rry_ik2(rry_dims(1), rry_dims(2), rry_dims(3)))
-        rry_ik2 = INT(rry_ik4, KIND=INT16)
+    CASE('ik2')
+        ALLOCATE(rry_ik4(rry_dims(1), rry_dims(2), rry_dims(3)))
+        rry_ik4 = INT(rry_ik2, KIND=INT32)
 
-        DEALLOCATE(rry_ik4)
+        DEALLOCATE(rry_ik2)
 END SELECT
 
-CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik2)
+CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik4)
 
 !------------------------------------------------------------------------------
 ! Jump to end for a more gracefully ending of the program in specific cases :-)

@@ -2,36 +2,26 @@
 ![Architecture](https://img.shields.io/badge/Architecture-x86-green)
 ![OS](https://img.shields.io/badge/Linux-64Bit-green)
 ![version](https://img.shields.io/badge/version-1.0.0-green)
-![Contributors](https://img.shields.io/badge/HLRS-NUM-blue)
 
 This program reads 3-Dimensional scalar fields to binarize and eventually invert them.
 
-It's tested with up to 160 Processors (4 nodes) on Vulcan. Turnaround time of roughly 200 Seconds while reading/computing/writing to storage on 18.5E09 Voxels of kind INTEGER2.
-
-The program currently support integer kind=2 and integer kind=4 (ik2/ik4) scalar fields.
+The program currently supports integer kind=2 and integer kind=4 (ik2/ik4) scalar fields.
 ## Meta Template
 Located in: 
 ```
-./datasets/I-CTBI.meta.template
+./datasets/I-CBI.meta.template
 ```
 For use with previously used data sets:
 ```
-cat ./datasets/I-CTBI.meta.template >> Your_Meta_File.meta
+cat ./datasets/I-CBI.meta.template >> Your_Meta_File.meta
 ```
-
-## [semantic versioning](https://semver.org):
-
-Given a version number MAJOR.MINOR.PATCH, increment the:
-
-* MAJOR version when you major Features (i.e. new way of image processing),
-* MINOR version when you extend functionality (i.e. new kernels), and
-* PATCH version when you make bug fixes.
 
 ## Requirements
 * x86 64bit Hardware
 * Linux x86 64Bit Installation with Bash or Zsh
 * GNU Compiler Collection (GCC), especially with gfortran
 * An installation of Open-MPI
+* Geberts libraries. Managed by: ```./manage_geb-lib.sh```
 
 The program must be compiled with:
 * Global integer kind=64Bit, signed
@@ -47,7 +37,7 @@ The installation of Open MPI is simplified with the install script of the reposi
 It's tested and therefore recommended to build and run the program as follows.
 ### Set up the Environment
 ```vim ./auxiliaries/system_environments/<system>.sh```
-```source ./environment.sh <system>``` 
+```source ./environment.source <system>``` 
 
 * Set an architecture/a system
   * Give the absolute base path of your mpi-installation
@@ -59,7 +49,8 @@ Create documentation: ```make docs```
 
 ### Uninstall:
 ```make clean && rm -r <your program directory>```
-## External Sources
+## Acknowledgements 
+some sources
 Plain text headers are parsed via a [strings module](https://gbenthien.net/strings/index.html) by George Benthien from San Diego.
 ## Arbitrary
 Use this program at your own risk.
