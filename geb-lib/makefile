@@ -192,10 +192,10 @@ cleandocs:
 	
 clean:
 	@echo "----------------------------------------------------------------------------------"
-	@echo "-- Cleaning central_src module directory"
+	@echo "-- Cleaning geb-lib module directory"
 	@echo "----------------------------------------------------------------------------------"
 	$(clean_cmd) $(mod_dir)*$(mod_ext)
 	@echo "----------------------------------------------------------------------------------"
-	@echo "-- Cleaning central_src object directory"
+	@echo "-- Cleaning geb-lib object directory"
 	@echo "----------------------------------------------------------------------------------"
 	$(clean_cmd) $(obj_dir)*$(obj_ext)

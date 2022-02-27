@@ -15,6 +15,13 @@ For use with previously used data sets:
 ```
 cat ./datasets/I-CBI.meta.template >> Your_Meta_File.meta
 ```
+## Usage
+For example for testing on julius:
+```
+mpirun ./bin/cbi_v1.0.0_x86_64 -np 4 <basename>.meta```
+```
+## Datasets
+... are transfered via file exchange and are not pushed into the repository. 
 
 ## Requirements
 * x86 64bit Hardware
@@ -50,8 +57,7 @@ Create documentation: ```make docs```
 ### Uninstall:
 ```make clean && rm -r <your program directory>```
 ## Acknowledgements 
-some sources
-Plain text headers are parsed via a [strings module](https://gbenthien.net/strings/index.html) by George Benthien from San Diego.
+Plain text parsed via [strings module](https://gbenthien.net/strings/index.html) by George Benthien from San Diego.
 ## Arbitrary
 Use this program at your own risk.
 

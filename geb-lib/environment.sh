@@ -30,7 +30,7 @@ fi
 # ----------------------------------------------------------------------------------------
 # System environment files
 #
-sys_env_path='/central_src/auxiliaries/system_environments/'
+sys_env_path='/geb-lib/auxiliaries/system_environments/'
 # ----------------------------------------------------------------------------------------
 #
 usage ()
