@@ -35,10 +35,10 @@ CONTAINS
 !------------------------------------------------------------------------------
 SUBROUTINE ct_binarize_ik2(array, in_lo_hi, out_lo_hi)
 
-INTEGER(KIND=INT16), DIMENSION(:,:,:), INTENT(INOUT) :: array
-INTEGER(KIND=ik), DIMENSION(2), INTENT(IN) :: in_lo_hi, out_lo_hi
+INTEGER(INT16), DIMENSION(:,:,:), INTENT(INOUT) :: array
+INTEGER(ik), DIMENSION(2), INTENT(IN) :: in_lo_hi, out_lo_hi
 
-INTEGER(KIND=ik) :: ii, jj, kk
+INTEGER(ik) :: ii, jj, kk
 
 DO kk=1, SIZE(array, DIM=3)
 DO jj=1, SIZE(array, DIM=2)
@@ -68,10 +68,10 @@ END SUBROUTINE ct_binarize_ik2
 !------------------------------------------------------------------------------
 SUBROUTINE ct_binarize_ik4(array, in_lo_hi, out_lo_hi)
 
-INTEGER(KIND=INT32), DIMENSION(:,:,:), INTENT(INOUT) :: array
-INTEGER(KIND=ik), DIMENSION(2), INTENT(IN) :: in_lo_hi, out_lo_hi
+INTEGER(INT32), DIMENSION(:,:,:), INTENT(INOUT) :: array
+INTEGER(ik), DIMENSION(2), INTENT(IN) :: in_lo_hi, out_lo_hi
 
-INTEGER(KIND=ik) :: ii, jj, kk
+INTEGER(ik) :: ii, jj, kk
 
 DO kk=1, SIZE(array, DIM=3)
 DO jj=1, SIZE(array, DIM=2)
@@ -112,41 +112,44 @@ USE binarize
 IMPLICIT NONE
 
 ! Parameter
-INTEGER(KIND=ik), PARAMETER :: debug = 2   ! Choose an even integer!!
+INTEGER(ik), PARAMETER :: debug = 2   ! Choose an even integer!!
 
-CHARACTER(LEN=mcl), DIMENSION(:), ALLOCATABLE :: m_rry
-CHARACTER(LEN=mcl) :: cmd_arg_history=''
-CHARACTER(LEN=scl) :: type_in, binary, invert, restart, restart_cmd_arg, filename, dmn_no
-CHARACTER(LEN=  8) :: date
-CHARACTER(LEN= 10) :: time
+CHARACTER(mcl), DIMENSION(:), ALLOCATABLE :: m_rry
+CHARACTER(mcl) :: cmd_arg_history='', stat=''
+CHARACTER(scl) :: type_in, binary, invert, restart, restart_cmd_arg, filename, dmn_no
+CHARACTER(  8) :: date
+CHARACTER( 10) :: time
 
-INTEGER(KIND=INT16), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik2
-INTEGER(KIND=INT32), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik4
-INTEGER(KIND=mik), DIMENSION(3) :: sections
-INTEGER(KIND=ik), DIMENSION(3) :: dims, rry_dims, sections_ik=0, rank_section
-INTEGER(KIND=ik), DIMENSION(3) :: remainder_per_dir, dims_reduced, subarray_origin
-INTEGER(KIND=ik), DIMENSION(2) :: in_lo_hi, out_lo_hi
-INTEGER(KIND=ik) :: img_max, img_min, specific_dmn, fh_temp
+INTEGER(INT16), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik2
+INTEGER(INT32), DIMENSION(:,:,:), ALLOCATABLE :: rry_ik4
 
-REAL(KIND=rk) :: start, end
-REAL(KIND=rk), DIMENSION(3) :: rgn_glbl_shft, spcng, origin
+INTEGER(mik), DIMENSION(3) :: sections
 
-LOGICAL :: stp, fex
+INTEGER(ik), DIMENSION(3) :: dims, rry_dims, sections_ik=0, rank_section, &
+    remainder_per_dir, dims_reduced, subarray_origin
+
+    INTEGER(ik), DIMENSION(2) :: in_lo_hi, out_lo_hi
+INTEGER(ik) :: img_max, img_min, specific_dmn, fh_temp
+
+REAL(rk) :: start, end
+REAL(rk), DIMENSION(3) :: rgn_glbl_shft, spcng, origin
+
+LOGICAL :: fex, abrt=.FALSE.
 
 ! MPI variables
-INTEGER(KIND=mik) :: ierr, my_rank, size_mpi
+INTEGER(mik) :: ierr, my_rank, size_mpi
 
 !------------------------------------------------------------------------------
 ! Invoke MPI 
 !------------------------------------------------------------------------------
 CALL mpi_init(ierr)
-CALL print_err_stop(std_out, "MPI_INIT didn't succeed", INT(ierr, KIND=ik))
+CALL print_err_stop(std_out, "MPI_INIT didn't succeed", INT(ierr, ik))
 
 CALL MPI_COMM_RANK(MPI_COMM_WORLD, my_rank, ierr)
-CALL print_err_stop(std_out, "MPI_COMM_RANK couldn't be retrieved", INT(ierr, KIND=ik))
+CALL print_err_stop(std_out, "MPI_COMM_RANK couldn't be retrieved", INT(ierr, ik))
 
 CALL MPI_COMM_SIZE(MPI_COMM_WORLD, size_mpi, ierr)
-CALL print_err_stop(std_out, "MPI_COMM_SIZE couldn't be retrieved", INT(ierr, KIND=ik))
+CALL print_err_stop(std_out, "MPI_COMM_SIZE couldn't be retrieved", INT(ierr, ik))
 
 IF (size_mpi < 2) CALL print_err_stop(std_out, "At least two ranks required to execute this program.", 1)
 
@@ -160,8 +163,8 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     ! Parse the command arguments
     !------------------------------------------------------------------------------
-    CALL get_cmd_args(binary, in%full, stp, restart_cmd_arg, cmd_arg_history)
-    IF(stp) GOTO 1001
+    CALL get_cmd_args(binary, in%full, stat, restart_cmd_arg, cmd_arg_history)
+    IF(stat/='') GOTO 1001
     
     IF (in%full=='') THEN
         CALL usage(binary)    
@@ -201,19 +204,21 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     WRITE(std_out, FMT_TXT) 'Reading data from *.meta file.'
     
-    CALL meta_read('RESTART'   , m_rry, restart)
-    CALL meta_read('TYPE_RAW'  , m_rry, type_in)
-    CALL meta_read('DIMENSIONS', m_rry, dims)
-    
-    CALL meta_read('ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft)
-    CALL meta_read('SPACING'   , m_rry, spcng)
-    CALL meta_read('EXPORT_DMN', m_rry, specific_dmn)
+    CALL meta_read('DATA_BYTE_ORDER', m_rry, db_order, stat); IF(stat/="") abrt=.TRUE.
 
-    CALL meta_read('BINARIZE_LO', m_rry, img_min)
-    CALL meta_read('BINARIZE_HI', m_rry, img_max)
-    CALL meta_read('BIN_INVERT' , m_rry, invert)
-    CALL meta_read('HU_THRSH_LO', m_rry, in_lo_hi(1))
-    CALL meta_read('HU_THRSH_HI', m_rry, in_lo_hi(2))
+    CALL meta_read('RESTART'   , m_rry, restart, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('TYPE_RAW'  , m_rry, type_in, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('DIMENSIONS', m_rry, dims, stat); IF(stat/="") abrt=.TRUE.
+    
+    CALL meta_read('ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('SPACING'   , m_rry, spcng, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('EXPORT_DMN', m_rry, specific_dmn, stat); IF(stat/="") abrt=.TRUE.
+
+    CALL meta_read('BINARIZE_LO', m_rry, img_min, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('BINARIZE_HI', m_rry, img_max, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('BIN_INVERT' , m_rry, invert, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('HU_THRSH_LO', m_rry, in_lo_hi(1), stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('HU_THRSH_HI', m_rry, in_lo_hi(2), stat); IF(stat/="") abrt=.TRUE.
 
     IF((type_in /= "ik2") .AND. (type_in /= "ik4")) THEN
         mssg = "Program only supports ik2 and ik4 for 'TYPE_RAW'"
@@ -224,15 +229,18 @@ END IF ! my_rank==0
 !------------------------------------------------------------------------------
 ! Send required variables
 !------------------------------------------------------------------------------
-CALL MPI_BCAST(in%p_n_bsnm ,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(out%p_n_bsnm,  INT(meta_mcl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(type_in        ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(invert      ,  INT(scl, KIND=mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(in%p_n_bsnm ,  INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(out%p_n_bsnm,  INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+
+CALL MPI_BCAST(type_in     ,  INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(invert      ,  INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+
 CALL MPI_BCAST(img_min     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(img_max     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(specific_dmn,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(in_lo_hi    ,  2_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(dims        ,  3_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+
 CALL MPI_BCAST(spcng       ,  3_mik, MPI_DOUBLE_PRECISION, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(rgn_glbl_shft, 3_mik, MPI_DOUBLE_PRECISION, 0_mik, MPI_COMM_WORLD, ierr)
 
@@ -269,9 +277,9 @@ END IF
 !------------------------------------------------------------------------------
 sections=0
 CALL MPI_DIMS_CREATE (size_mpi, 3_mik, sections, ierr)
-sections_ik = INT(sections, KIND=ik)
+sections_ik = INT(sections, ik)
 
-CALL get_rank_section(INT(my_rank, KIND=ik), sections_ik, rank_section)
+CALL get_rank_section(INT(my_rank, ik), sections_ik, rank_section)
 
 remainder_per_dir = MODULO(dims, sections_ik)
 
@@ -368,7 +376,7 @@ IF(specific_dmn == my_rank+1) THEN
         CASE('ik2')
             CALL ser_write_raw(fh_temp, filename, rry_ik2, 'BIG_ENDIAN')
         CASE('ik4')
-            CALL ser_write_raw(fh_temp, filename, INT(rry_ik4, KIND=INT16), 'BIG_ENDIAN')
+            CALL ser_write_raw(fh_temp, filename, INT(rry_ik4, INT16), 'BIG_ENDIAN')
     END SELECT
 
     CALL write_vtk_struct_points_footer(fh_temp, filename)
@@ -376,7 +384,7 @@ END IF
 
 !------------------------------------------------------------------------------
 ! Write raw data
-! Only signed integer kind=4 supported! Everything else is a ! nonsense or 
+! Only signed integer 4 supported! Everything else is a ! nonsense or 
 ! compatibility mess.
 !------------------------------------------------------------------------------
 IF(my_rank==0) THEN
@@ -387,7 +395,7 @@ END IF
 SELECT CASE(type_in)
     CASE('ik2')
         ALLOCATE(rry_ik4(rry_dims(1), rry_dims(2), rry_dims(3)))
-        rry_ik4 = INT(rry_ik2, KIND=INT32)
+        rry_ik4 = INT(rry_ik2, INT32)
 
         DEALLOCATE(rry_ik2)
 END SELECT
@@ -409,13 +417,13 @@ IF(my_rank == 0) THEN
     WRITE(std_out, FMT_TXT_SEP)
 
     CALL meta_signing(binary)
-    CALL meta_close(size_mpi)
+    CALL meta_close()
 
     IF (std_out/=6) CALL meta_stop_ascii(fh=std_out, suf='.std_out')
 
 END IF ! (my_rank == 0)
 
 Call MPI_FINALIZE(ierr)
-CALL print_err_stop(std_out, "MPI_FINALIZE didn't succeed", INT(ierr, KIND=ik))
+CALL print_err_stop(std_out, "MPI_FINALIZE didn't succeed", INT(ierr, ik))
 
 END PROGRAM ctbinarization
