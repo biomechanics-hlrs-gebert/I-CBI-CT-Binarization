@@ -115,7 +115,7 @@ IMPLICIT NONE
 INTEGER(ik), PARAMETER :: debug = 2   ! Choose an even integer!!
 
 CHARACTER(mcl), DIMENSION(:), ALLOCATABLE :: m_rry
-CHARACTER(mcl) :: cmd_arg_history='', stat=''
+CHARACTER(mcl) :: cmd_arg_history='', stat='', db_order='', datarep=''
 CHARACTER(scl) :: type_in, binary, invert, restart, restart_cmd_arg, filename, dmn_no
 CHARACTER(  8) :: date
 CHARACTER( 10) :: time
@@ -181,7 +181,7 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     global_meta_prgrm_mstr_app = 'cbi' 
     global_meta_program_keyword = 'CT-BINARIZATION'
-    CALL meta_append(m_rry)
+    CALL meta_append(m_rry, size_mpi, stat)
 
     !------------------------------------------------------------------------------
     ! Redirect std_out into a file in case std_out is not useful by environment.
@@ -195,7 +195,7 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     IF(std_out/=6) CALL meta_start_ascii(std_out, '.std_out')
 
-    CALL show_title()
+    CALL show_title(["Johannes Gebert, M.Sc. (HLRS, NUM) "])
  
     IF(debug >=0) WRITE(std_out, FMT_MSG) "Post mortem info probably in ./datasets/temporary.std_out"
 
@@ -205,7 +205,6 @@ IF (my_rank==0) THEN
     WRITE(std_out, FMT_TXT) 'Reading data from *.meta file.'
     
     CALL meta_read('DATA_BYTE_ORDER', m_rry, db_order, stat); IF(stat/="") abrt=.TRUE.
-
     CALL meta_read('RESTART'   , m_rry, restart, stat); IF(stat/="") abrt=.TRUE.
     CALL meta_read('TYPE_RAW'  , m_rry, type_in, stat); IF(stat/="") abrt=.TRUE.
     CALL meta_read('DIMENSIONS', m_rry, dims, stat); IF(stat/="") abrt=.TRUE.
@@ -220,6 +219,18 @@ IF (my_rank==0) THEN
     CALL meta_read('HU_THRSH_LO', m_rry, in_lo_hi(1), stat); IF(stat/="") abrt=.TRUE.
     CALL meta_read('HU_THRSH_HI', m_rry, in_lo_hi(2), stat); IF(stat/="") abrt=.TRUE.
 
+    !------------------------------------------------------------------------------
+    ! Check the endianess
+    !------------------------------------------------------------------------------
+    IF (db_order == "BigEndian") THEN
+        datarep = "BIG_ENDIAN"
+     ELSE
+        datarep = "LITTLE_ENDIAN"
+     END IF    
+
+    !------------------------------------------------------------------------------
+    ! Check data type
+    !------------------------------------------------------------------------------
     IF((type_in /= "ik2") .AND. (type_in /= "ik4")) THEN
         mssg = "Program only supports ik2 and ik4 for 'TYPE_RAW'"
         CALL print_err_stop(std_out, mssg, 1)
@@ -229,19 +240,20 @@ END IF ! my_rank==0
 !------------------------------------------------------------------------------
 ! Send required variables
 !------------------------------------------------------------------------------
-CALL MPI_BCAST(in%p_n_bsnm ,  INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(out%p_n_bsnm,  INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(in%p_n_bsnm , INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(out%p_n_bsnm, INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 
-CALL MPI_BCAST(type_in     ,  INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(invert      ,  INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(type_in, INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(invert , INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(datarep, INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 
-CALL MPI_BCAST(img_min     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(img_max     ,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(specific_dmn,  1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(in_lo_hi    ,  2_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(dims        ,  3_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(img_min     , 1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(img_max     , 1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(specific_dmn, 1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(in_lo_hi    , 2_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(dims        , 3_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 
-CALL MPI_BCAST(spcng       ,  3_mik, MPI_DOUBLE_PRECISION, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(spcng        , 3_mik, MPI_DOUBLE_PRECISION, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(rgn_glbl_shft, 3_mik, MPI_DOUBLE_PRECISION, 0_mik, MPI_COMM_WORLD, ierr)
 
 !------------------------------------------------------------------------------
@@ -327,14 +339,22 @@ IF(my_rank == 0) THEN
     END IF
 END IF
 
+IF(TRIM(datarep) == "BIG_ENDIAN") THEN
+    datarep = "external32"
+ELSE
+    datarep = "native"
+END IF 
+
 !------------------------------------------------------------------------------
 ! Read binary part of the vtk file - basically a *.raw file
 !------------------------------------------------------------------------------
 SELECT CASE(type_in)
     CASE('ik2') 
-        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik2)
+        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims,&
+             subarray_origin, rry_ik2, TRIM(datarep))
     CASE('ik4') 
-        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik4)
+        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims,&
+             subarray_origin, rry_ik4, TRIM(datarep))
 END SELECT
 
 !------------------------------------------------------------------------------
