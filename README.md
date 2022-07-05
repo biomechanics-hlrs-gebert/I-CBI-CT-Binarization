@@ -20,7 +20,7 @@ cat ./datasets/I-CBI.meta.template >> Your_Meta_File.meta
 ## Usage
 For example for testing on julius:
 ```
-mpirun ./bin/cbi_v1.0.0_x86_64 -np 4 <basename>.meta```
+mpirun ./bin/cbi_v1.0.0_x86_64 -np 4 <basename>.meta
 ```
 ## Datasets
 ... are transfered via file exchange and are not pushed into the repository. 
