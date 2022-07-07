@@ -107,7 +107,7 @@ USE MPI
 USE raw_binary
 USE vtk_meta_data
 USE binarize
-
+USE formatted_plain
 
 IMPLICIT NONE
 
@@ -115,8 +115,8 @@ IMPLICIT NONE
 INTEGER(ik), PARAMETER :: debug = 2   ! Choose an even integer!!
 
 CHARACTER(mcl), DIMENSION(:), ALLOCATABLE :: m_rry
-CHARACTER(mcl) :: cmd_arg_history='', stat='', db_order='', datarep=''
-CHARACTER(scl) :: type_in, binary, invert, restart, restart_cmd_arg, filename, dmn_no
+CHARACTER(mcl) :: cmd_arg_history='', stat='', db_order='', datarep='', stringno=''
+CHARACTER(scl) :: type, binary, invert, restart, restart_cmd_arg, vtk_export_filename, dmn_no
 CHARACTER(  8) :: date
 CHARACTER( 10) :: time
 
@@ -176,7 +176,7 @@ IF (my_rank==0) THEN
     END IF
 
     !------------------------------------------------------------------------------
-    ! Check and open the input file; Modify the Meta-Filename / Basename
+    ! Check and open the input file; Modify the Meta-vtk_export_filename / Basename
     ! Define the new application name first
     !------------------------------------------------------------------------------
     global_meta_prgrm_mstr_app = 'cbi' 
@@ -204,20 +204,22 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     WRITE(std_out, FMT_TXT) 'Reading data from *.meta file.'
     
-    CALL meta_read('DATA_BYTE_ORDER', m_rry, db_order, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('RESTART'   , m_rry, restart, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('TYPE_RAW'  , m_rry, type_in, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('DIMENSIONS', m_rry, dims, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('DATA_BYTE_ORDER', m_rry, db_order, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('RESTART'   , m_rry, restart, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('TYPE_RAW'  , m_rry, type, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('DIMENSIONS', m_rry, dims, stat); CALL std_stop(stat, abrt)
     
-    CALL meta_read('ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('SPACING'   , m_rry, spcng, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('EXPORT_DMN', m_rry, specific_dmn, stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('ORIGIN_SHIFT_GLBL', m_rry, rgn_glbl_shft, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('SPACING'   , m_rry, spcng, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('EXPORT_DMN', m_rry, specific_dmn, stat); CALL std_stop(stat, abrt)
 
-    CALL meta_read('BINARIZE_LO', m_rry, img_min, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('BINARIZE_HI', m_rry, img_max, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('BIN_INVERT' , m_rry, invert, stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('HU_THRSH_LO', m_rry, in_lo_hi(1), stat); IF(stat/="") abrt=.TRUE.
-    CALL meta_read('HU_THRSH_HI', m_rry, in_lo_hi(2), stat); IF(stat/="") abrt=.TRUE.
+    CALL meta_read('BINARIZE_LO', m_rry, img_min, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('BINARIZE_HI', m_rry, img_max, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('BIN_INVERT' , m_rry, invert, stat); CALL std_stop(stat, abrt)
+    CALL meta_read('HU_THRSH_LO', m_rry, in_lo_hi(1), stat); CALL std_stop(stat, abrt)
+    CALL meta_read('HU_THRSH_HI', m_rry, in_lo_hi(2), stat); CALL std_stop(stat, abrt)
+
+    IF(abrt) CALL print_err_stop(std_out, "Error while reading a keyword.", 1)
 
     !------------------------------------------------------------------------------
     ! Check the endianess
@@ -231,7 +233,7 @@ IF (my_rank==0) THEN
     !------------------------------------------------------------------------------
     ! Check data type
     !------------------------------------------------------------------------------
-    IF((type_in /= "ik2") .AND. (type_in /= "ik4")) THEN
+    IF((type /= "ik2") .AND. (type /= "ik4")) THEN
         mssg = "Program only supports ik2 and ik4 for 'TYPE_RAW'"
         CALL print_err_stop(std_out, mssg, 1)
     END IF
@@ -243,9 +245,9 @@ END IF ! my_rank==0
 CALL MPI_BCAST(in%p_n_bsnm , INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(out%p_n_bsnm, INT(meta_mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 
-CALL MPI_BCAST(type_in, INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(type, INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(invert , INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
-CALL MPI_BCAST(datarep, INT(scl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
+CALL MPI_BCAST(datarep, INT(mcl, mik), MPI_CHAR, 0_mik, MPI_COMM_WORLD, ierr)
 
 CALL MPI_BCAST(img_min     , 1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
 CALL MPI_BCAST(img_max     , 1_mik, MPI_INTEGER8, 0_mik, MPI_COMM_WORLD, ierr)
@@ -267,9 +269,9 @@ IF(specific_dmn == my_rank+1) THEN
     
     WRITE(dmn_no, '(I0)') specific_dmn
 
-    filename = TRIM(out%p_n_bsnm)//"-Domain"//TRIM(ADJUSTL(dmn_no))//vtk_suf
+    vtk_export_filename = TRIM(out%p_n_bsnm)//"-Domain"//TRIM(ADJUSTL(dmn_no))//vtk_suf
 
-    INQUIRE(FILE=filename, EXIST=fex)
+    INQUIRE(FILE=vtk_export_filename, EXIST=fex)
 
     IF(fex) THEN
         mssg = "The *.vtk of the specified domain already exists."
@@ -301,7 +303,9 @@ rry_dims  = (dims_reduced / sections_ik)
 
 subarray_origin = (rank_section-1_ik) * (rry_dims)
 
+!------------------------------------------------------------------------------
 ! Add the remainder to the last domains of each dimension
+!------------------------------------------------------------------------------
 IF(rank_section(1) == sections_ik(1)) rry_dims(1) = rry_dims(1) + remainder_per_dir(1)
 IF(rank_section(2) == sections_ik(2)) rry_dims(2) = rry_dims(2) + remainder_per_dir(2)
 IF(rank_section(3) == sections_ik(3)) rry_dims(3) = rry_dims(3) + remainder_per_dir(3)
@@ -309,7 +313,6 @@ IF(rank_section(3) == sections_ik(3)) rry_dims(3) = rry_dims(3) + remainder_per_
 IF(my_rank == 0) THEN
     WRITE(std_out, FMT_TXT) 'Reading binary information of *.raw file.'
 
-    ! DEBUG INFORMATION
     IF (debug >= 0) THEN 
         CALL DATE_AND_TIME(date, time)
         
@@ -348,13 +351,14 @@ END IF
 !------------------------------------------------------------------------------
 ! Read binary part of the vtk file - basically a *.raw file
 !------------------------------------------------------------------------------
-SELECT CASE(type_in)
+SELECT CASE(type)
     CASE('ik2') 
-        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims,&
-             subarray_origin, rry_ik2, TRIM(datarep))
+        ALLOCATE(rry_ik2(rry_dims(1), rry_dims(2), rry_dims(3)))
+        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, &
+            rry_dims, subarray_origin, rry_ik2, TRIM(datarep))
     CASE('ik4') 
-        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims,&
-             subarray_origin, rry_ik4, TRIM(datarep))
+        CALL mpi_read_raw(TRIM(in%p_n_bsnm)//raw_suf, 0_8, dims, &
+            rry_dims, subarray_origin, rry_ik4, TRIM(datarep))
 END SELECT
 
 !------------------------------------------------------------------------------
@@ -377,29 +381,26 @@ END IF
 !------------------------------------------------------------------------------
 IF(my_rank==0) WRITE(std_out, FMT_TXT) 'Binarizing image.'
 
-SELECT CASE(type_in)
+SELECT CASE(TRIM(type))
     CASE('ik2'); CALL ct_binarize(rry_ik2, in_lo_hi, out_lo_hi)
     CASE('ik4'); CALL ct_binarize(rry_ik4, in_lo_hi, out_lo_hi)
 END SELECT
+
+IF(my_rank==0) WRITE(std_out, FMT_TXT) 'Writing file.'
 
 !------------------------------------------------------------------------------
 ! Write a specific domain by user request for development purposes as vtk file.
 ! PART 2. Part 1 after broadcasting general information.
 !------------------------------------------------------------------------------
-IF(specific_dmn == my_rank+1) THEN
+IF((specific_dmn == my_rank+1) .AND. (.NOT. fex)) THEN
     origin = (rry_dims * (sections - 1_ik) * spcng) + rgn_glbl_shft
 
-    CALL write_vtk_struct_points_header(fh_temp, filename, 'ik2', &
-        spcng, origin, rry_dims)
-
-    SELECT CASE(type_in)
-        CASE('ik2')
-            CALL ser_write_raw(fh_temp, filename, rry_ik2, 'BIG_ENDIAN')
-        CASE('ik4')
-            CALL ser_write_raw(fh_temp, filename, INT(rry_ik4, INT16), 'BIG_ENDIAN')
+    SELECT CASE(TRIM(type))
+    CASE('ik2') 
+        CALL write_ser_vtk(TRIM(vtk_export_filename),'ik2', spcng, rry_dims, origin, rry_ik2)
+    CASE('ik4') 
+        CALL write_ser_vtk(TRIM(vtk_export_filename),'ik4', spcng, rry_dims, origin, rry_ik4)
     END SELECT
-
-    CALL write_vtk_struct_points_footer(fh_temp, filename)
 END IF
 
 !------------------------------------------------------------------------------
@@ -407,20 +408,18 @@ END IF
 ! Only signed integer 4 supported! Everything else is a ! nonsense or 
 ! compatibility mess.
 !------------------------------------------------------------------------------
-IF(my_rank==0) THEN
-    WRITE(std_out, FMT_TXT) 'Writing binary information to *.raw file.'
-    CALL meta_write('TYPE_RAW', 'ik4')
-END IF
+IF(my_rank==0) WRITE(std_out, FMT_TXT) 'Writing binary information to *.raw file.'
 
-SELECT CASE(type_in)
-    CASE('ik2')
-        ALLOCATE(rry_ik4(rry_dims(1), rry_dims(2), rry_dims(3)))
-        rry_ik4 = INT(rry_ik2, INT32)
-
-        DEALLOCATE(rry_ik2)
+SELECT CASE(TRIM(type))
+CASE('ik2') 
+    CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, &
+        rry_dims, subarray_origin, rry_ik2)
+    DEALLOCATE(rry_ik2)
+CASE('ik4') 
+    CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, &
+        rry_dims, subarray_origin, rry_ik4)
+    DEALLOCATE(rry_ik4)
 END SELECT
-
-CALL mpi_write_raw(TRIM(out%p_n_bsnm)//raw_suf, 0_8, dims, rry_dims, subarray_origin, rry_ik4)
 
 !------------------------------------------------------------------------------
 ! Jump to end for a more gracefully ending of the program in specific cases :-)

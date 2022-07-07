@@ -624,7 +624,7 @@ END SUBROUTINE write_tensor_2nd_rank_R66
 !------------------------------------------------------------------------------
 SUBROUTINE std_stop(stat, abrt)
 
-CHARACTER(*), INTENT(IN) :: stat
+CHARACTER(*), INTENT(INOUT) :: stat
 LOGICAL, INTENT(INOUT) :: abrt
 
 INTEGER(mik) :: ierr, my_rank
@@ -640,6 +640,7 @@ IF(ierr /= 0_ik) my_rank = 0_ik
 IF((stat /= "") .AND. (my_rank==0)) THEN
     WRITE(std_out, FMT_ERR) "Error in keyword '"//TRIM(stat)//"'."
     abrt = .TRUE.
+    stat = ''
 END IF 
 
 END SUBROUTINE std_stop

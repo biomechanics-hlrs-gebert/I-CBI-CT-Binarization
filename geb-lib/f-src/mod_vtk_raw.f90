@@ -133,8 +133,10 @@ INTEGER(MPI_OFFSET_KIND), INTENT(IN) :: disp
 INTEGER(ik),DIMENSION(3), INTENT(IN) :: dims, subarray_dims, subarray_origin
 INTEGER(INT16), DIMENSION (:,:,:), ALLOCATABLE, INTENT(INOUT) :: subarray
 
+!------------------------------------------------------------------------------  
 ! file handle fh is provided by mpi itself and mustn't be given by the program/call/user
-INTEGER(mik) :: ierr, type_subarray, my_rank, size_mpi, fh
+!------------------------------------------------------------------------------  
+INTEGER(mik) :: ierr, type_subarray, fh
 CHARACTER(scl) :: datarep
 CHARACTER(*), INTENT(IN), OPTIONAL :: dtrep
 
@@ -143,11 +145,6 @@ datarep = 'NATIVE'
 IF(PRESENT(dtrep)) THEN
    IF (dtrep /= "") datarep = TRIM(dtrep)
 END IF 
-
-! Required to open files
-CALL MPI_COMM_RANK(MPI_COMM_WORLD, my_rank, ierr)
-
-CALL MPI_COMM_SIZE(MPI_COMM_WORLD, size_mpi, ierr)
 
 CALL MPI_FILE_OPEN(MPI_COMM_WORLD, TRIM(filename), MPI_MODE_RDONLY, MPI_INFO_NULL, fh, ierr)
 
@@ -158,9 +155,9 @@ CALL MPI_TYPE_COMMIT(type_subarray, ierr)
 
 CALL MPI_FILE_SET_VIEW(fh, disp, MPI_INTEGER2, type_subarray, TRIM(datarep), MPI_INFO_NULL, ierr)
 
-! ALLOCATE(subarray(subarray_dims(1), subarray_dims(2), subarray_dims(3)))
+IF(.NOT. ALLOCATED(subarray)) ALLOCATE(subarray(subarray_dims(1), subarray_dims(2), subarray_dims(3)))
 
-CALL MPI_FILE_READ_ALL(fh, subarray, INT(SIZE(subarray), mik), MPI_INTEGER2, MPI_STATUS_IGNORE, ierr)
+CALL MPI_FILE_READ(fh, subarray, INT(SIZE(subarray), mik), MPI_INTEGER2, MPI_STATUS_IGNORE, ierr)
 
 CALL MPI_TYPE_FREE(type_subarray, ierr)
 
@@ -194,7 +191,7 @@ INTEGER(ik),DIMENSION(3), INTENT(IN) :: dims, subarray_dims, subarray_origin
 INTEGER(INT32), DIMENSION (:,:,:), ALLOCATABLE, INTENT(INOUT) :: subarray
 
 ! file handle fh is provided by mpi itself and mustn't be given by the program/call/user
-INTEGER(mik) :: ierr, type_subarray, my_rank, size_mpi, fh
+INTEGER(mik) :: ierr, type_subarray, fh
 CHARACTER(scl) :: datarep
 CHARACTER(*), INTENT(IN), OPTIONAL :: dtrep
 
@@ -203,11 +200,6 @@ datarep = 'NATIVE'
 IF(PRESENT(dtrep)) THEN
    IF (dtrep /= "") datarep = TRIM(dtrep)
 END IF 
-
-! Required to open files
-CALL MPI_COMM_RANK(MPI_COMM_WORLD, my_rank, ierr)
-
-CALL MPI_COMM_SIZE(MPI_COMM_WORLD, size_mpi, ierr)
 
 CALL MPI_FILE_OPEN(MPI_COMM_WORLD, TRIM(filename), MPI_MODE_RDONLY, MPI_INFO_NULL, fh, ierr)
 
@@ -218,9 +210,8 @@ CALL MPI_TYPE_COMMIT(type_subarray, ierr)
 
 CALL MPI_FILE_SET_VIEW(fh, disp, MPI_INTEGER4, type_subarray, TRIM(datarep), MPI_INFO_NULL, ierr)
 
-! ALLOCATE(subarray(subarray_dims(1), subarray_dims(2), subarray_dims(3)))
 
-CALL MPI_FILE_READ_ALL(fh, subarray, INT(SIZE(subarray), mik), MPI_INTEGER4, MPI_STATUS_IGNORE, ierr)
+CALL MPI_FILE_READ(fh, subarray, INT(SIZE(subarray), mik), MPI_INTEGER4, MPI_STATUS_IGNORE, ierr)
 
 CALL MPI_TYPE_FREE(type_subarray, ierr)
 
@@ -355,7 +346,7 @@ REAL(REAL32), DIMENSION (:,:,:), ALLOCATABLE, INTENT(OUT) :: subarray
 CHARACTER(*), INTENT(IN), OPTIONAL :: dtrep
 
 ! file handle fh is provided by mpi itself and mustn't be given by the program/call/user
-INTEGER(mik) :: ierr, type_subarray, my_rank, size_mpi, fh
+INTEGER(mik) :: ierr, type_subarray, fh
 CHARACTER(scl) :: datarep
 
 datarep = 'NATIVE'
@@ -363,11 +354,6 @@ datarep = 'NATIVE'
 IF(PRESENT(dtrep)) THEN
    IF (dtrep /= "") datarep = TRIM(dtrep)
 END IF 
-
-! Required to open files
-CALL MPI_COMM_RANK(MPI_COMM_WORLD, my_rank, ierr)
-
-CALL MPI_COMM_SIZE(MPI_COMM_WORLD, size_mpi, ierr)
 
 CALL MPI_FILE_OPEN(MPI_COMM_WORLD, TRIM(filename), MPI_MODE_RDONLY, MPI_INFO_NULL, fh, ierr)
   
@@ -415,7 +401,7 @@ INTEGER(ik),DIMENSION(3), INTENT(IN) :: dims, subarray_dims, subarray_origin
 REAL(REAL64), DIMENSION (:,:,:), ALLOCATABLE, INTENT(OUT) :: subarray
 
 ! file handle fh is provided by mpi itself and mustn't be given by the program/call/user
-INTEGER(mik) :: ierr, type_subarray, my_rank, size_mpi, fh
+INTEGER(mik) :: ierr, type_subarray, fh
 CHARACTER(scl) :: datarep
 CHARACTER(*), INTENT(IN), OPTIONAL :: dtrep
 
@@ -424,11 +410,6 @@ datarep = 'NATIVE'
 IF(PRESENT(dtrep)) THEN
    IF (dtrep /= "") datarep = TRIM(dtrep)
 END IF 
-
-! Required to open files
-CALL MPI_COMM_RANK(MPI_COMM_WORLD, my_rank, ierr)
-
-CALL MPI_COMM_SIZE(MPI_COMM_WORLD, size_mpi, ierr)
 
 ! file handle fh is provided by mpi itself and mustn't be given by the program/call/user
 CALL MPI_FILE_OPEN(MPI_COMM_WORLD, TRIM(filename), MPI_MODE_RDONLY, MPI_INFO_NULL, fh, ierr)
@@ -499,7 +480,7 @@ CALL MPI_TYPE_COMMIT(type_subarray, ierr)
 
 CALL MPI_FILE_SET_VIEW(fh, disp, MPI_INTEGER2, type_subarray, TRIM(datarep), MPI_INFO_NULL, ierr)
 
-CALL MPI_FILE_WRITE_ALL(fh, subarray, INT(SIZE(subarray), mik), MPI_INTEGER2, MPI_STATUS_IGNORE, ierr)
+CALL MPI_FILE_WRITE(fh, subarray, INT(SIZE(subarray), mik), MPI_INTEGER2, MPI_STATUS_IGNORE, ierr)
 
 CALL MPI_TYPE_FREE(type_subarray, ierr)
 
@@ -559,7 +540,7 @@ CALL MPI_TYPE_COMMIT(type_subarray, ierr)
 CALL MPI_FILE_SET_VIEW(fh, disp, MPI_INTEGER4, type_subarray, &
    TRIM(datarep), MPI_INFO_NULL, ierr)
 
-CALL MPI_FILE_WRITE_ALL(fh, subarray, INT(SIZE(subarray), mik), &
+CALL MPI_FILE_WRITE(fh, subarray, INT(SIZE(subarray), mik), &
    MPI_INTEGER4, MPI_STATUS_IGNORE, ierr)
 
 CALL MPI_TYPE_FREE(type_subarray, ierr)

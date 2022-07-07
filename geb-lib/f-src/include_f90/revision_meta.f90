@@ -1,2 +1,2 @@
 CHARACTER(LEN=scl), PARAMETER :: longname = 'CT-Binarization'
-CHARACTER(LEN=scl), PARAMETER :: hash = '0b46e92ec395554a5d19801ce48c3eba5e6a93c9'
+CHARACTER(LEN=scl), PARAMETER :: hash = '70744a2957d4d9a463730071dfaa2111c6a416dd'

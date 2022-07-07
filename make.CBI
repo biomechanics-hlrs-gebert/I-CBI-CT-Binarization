@@ -41,7 +41,7 @@ export build_path
 # Directories 
 # st: "Subtree" - A git procedure to inherit another repository as some sort of
 # submodule. https://gist.github.com/SKempin/b7857a6ff6bddb05717cc17a44091202
-st_path= $(build_path)/geb-lib/
+st_path= $(build_path)/geb-lib
 #
 st_obj_dir = $(st_path)/obj/
 st_mod_dir = $(st_path)/mod/
@@ -69,40 +69,10 @@ bin_suf = _x86_64
 # ------------------------------------------------------------------------------
 clean_cmd = rm -f
 # ------------------------------------------------------------------------------
-# Compilers
-#ifeq($(strip $(trgt_arch)) ,"julius" )
-  compiler = "mpif90"
-#endif
-#ifeq($(strip $(trgt_arch)) ,"hawk" )
-#  compiler = "mpif90"
-#endif
-export compiler
-# ------------------------------------------------------------------------------
-# Programming Environment - gnu, LLVM
-PE = gnu
-# ------------------------------------------------------------------------------
-# Compile mode - dev, prod
-compile_MODE = dev
-# ------------------------------------------------------------------------------
-# Compile flags GNU Compiler
-# The subtree structure requires two directories containing modules. 
-# In this case, the program root/mod directory addressed by the -J 
-# http://www.hpc.icc.ru/documentation/intel/f_ug1/fced_mod.htm
-ifeq ($(PE),gnu)
-	f90_std_IJ     = -J$(mod_dir) -I$(st_mod_dir)
-	f90_dev_flags  = 	-fdefault-integer-8 -fdefault-real-8 \
-						-finstrument-functions -ggdb -o -O3 \
-						-fbacktrace -fbounds-check -fbackslash \
-						-Wno-conversion -Wall
-	f90_prod_flags = 	-fdefault-integer-8 -fdefault-real-8 \
-						-finstrument-functions -O3 -fbounds-check
-
-	ifeq ($(compile_MODE),prod)
-		c_flags_f90 = $(f90_std_IJ) $(f90_prod_flags)
-	else
-		c_flags_f90 =  $(f90_std_IJ) $(f90_dev_flags)
-	endif
-endif
+#
+# Inlcude build options
+include $(st_path)/make.flags
+#
 # ------------------------------------------------------------------------------
 # Executable
 main_bin = $(bin_dir)$(bin_name)_$(trgt_vrsn)$(bin_suf)
@@ -114,6 +84,8 @@ f-objects = $(st_obj_dir)mod_global_std$(obj_ext)\
 			$(st_obj_dir)mod_user_interaction$(obj_ext) \
 			$(st_obj_dir)mod_meta$(obj_ext) \
 			$(st_obj_dir)mod_vtk_raw$(obj_ext)\
+			$(st_obj_dir)mod_formatted_plain$(obj_ext)\
+			$(st_obj_dir)mod_math$(obj_ext)\
 			$(obj_dir)ct_binarization$(obj_ext)
 
 # ------------------------------------------------------------------------------
@@ -132,7 +104,7 @@ $(obj_dir)ct_binarization$(obj_ext):$(st_mod_dir)global_std$(mod_ext) $(st_mod_d
 						 $(st_mod_dir)vtk_meta_data$(mod_ext)\
 						 $(f_src_dir)ct_binarization$(f90_ext)
 	@echo "-- Compiles: " $(f_src_dir)ct_binarization$(f90_ext)" -----"
-	$(compiler) $(c_flags_f90) -c $(f_src_dir)ct_binarization$(f90_ext) -o $@
+	$(f90_compiler) $(c_flags_f90) -c $(f_src_dir)ct_binarization$(f90_ext) -o $@
 	@echo
 
 # --------------------------------------------------------------------------------------------------
@@ -150,7 +122,7 @@ $(main_bin): export_revision $(f-objects)
 	@echo "----------------------------------------------------------------------------------"
 	@echo '-- Final link step of $(long_name) executable'
 	@echo "----------------------------------------------------------------------------------"
-	$(compiler) $(f-objects) -o $(main_bin)
+	$(f90_compiler) $(f-objects) -o $(main_bin)
 	@echo
 	@echo "----------------------------------------------------------------------------------"
 	@echo "-- Successfully build all."
